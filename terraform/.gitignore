@@ -1,5 +1,6 @@
 # Local .terraform directories
 **/.terraform/*
+**/.terragrunt-cache/*
 
 # .tfstate files
 *.tfstate
@@ -8,3 +9,5 @@
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+.terraform.lock.hcl
