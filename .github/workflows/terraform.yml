@@ -71,7 +71,7 @@ jobs:
       # Generates an execution plan for Terraform
       - name: Terragrunt Plan
         id: plan
-        run: terragrunt run-all plan > plan.log
+        run: terragrunt run-all plan > plan.txt
         working-directory: ${{ env.WORKING_DIR }}
 
       - name: Update Pull Request
