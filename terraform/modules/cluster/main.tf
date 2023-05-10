@@ -1,24 +1,48 @@
-resource "aws_kms_key" "log_key" {
-  description             = "For Cloudwatch Logs"
-  deletion_window_in_days = 7
+data "aws_availability_zones" "available" {}
+
+locals {
+  vpc_cidr = "10.0.0.0/16"
+  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
 }
 
-resource "aws_cloudwatch_log_group" "logs" {
-  name = "${var.env}-cluster-logs"
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "4.0.1"
+
+  name = "${var.env}-vpc"
+  cidr = local.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = ["10.0.0.0/19", "10.0.32.0/19"]
+  public_subnets  = ["10.0.64.0/19", "10.0.96.0/19"]
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
 }
 
-resource "aws_ecs_cluster" "cluster" {
-  name = "${var.env}-cluster"
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "19.13.1"
 
-  configuration {
-    execute_command_configuration {
-      kms_key_id = aws_kms_key.log_key.arn
-      logging    = "OVERRIDE"
+  cluster_name = var.env
 
-      log_configuration {
-        cloud_watch_encryption_enabled = true
-        cloud_watch_log_group_name     = aws_cloudwatch_log_group.logs.name
-      }
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = true
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  enable_irsa = true
+
+  eks_managed_node_groups = {
+    general = {
+      desired_size = 1
+      min_size     = 1
+      max_size     = 10
+
+      instance_type = "t3.small"
     }
   }
+
 }
