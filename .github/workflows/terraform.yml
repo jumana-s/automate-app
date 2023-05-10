@@ -8,7 +8,8 @@ on:
   push:
     paths:
       - terraform/**
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
     paths:
       - terraform/**
@@ -62,13 +63,43 @@ jobs:
 
       # Initialize Terragrunt
       - name: Terragrunt Init
+        id: init
         run: terragrunt run-all init
         working-directory: ${{ env.WORKING_DIR }}
 
       # Generates an execution plan for Terraform
       - name: Terragrunt Plan
+        id: plan
         run: terragrunt run-all plan
         working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Update Pull Request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
         # On push to "main", build or change infrastructure according to Terragrunt configuration files
       - name: Terragrunt Apply
