@@ -2,25 +2,25 @@
 # On pull request events, this workflow will run `terragrunt init` and `terragrunt plan` . On push events
 # to the "main" branch, `terragrunt apply` will be executed.
 
-name: "Terraform Infra"
+name: "Apps Deploy"
 
 on:
   push:
     paths:
-      - terraform/terragrunt/dev/infra/**
-      - ".github/workflows/terraform.yml"
+      - terraform/terragrunt/dev/apps/**
+      - ".github/workflows/apps.yml"
     branches:
       - main
   pull_request:
     paths:
-      - terraform/terragrunt/dev/infra**
-      - ".github/workflows/terraform.yml"
+      - terraform/terragrunt/dev/apps**
+      - ".github/workflows/apps.yml"
 
 env:
   AWS_REGION: us-east-1
   TF_VERSION: 1.4.6
   TERRAGRUNT_VERSION: 0.45.10
-  WORKING_DIR: "terraform/terragrunt/dev/infra"
+  WORKING_DIR: "terraform/terragrunt/dev/apps"
 
 permissions:
   contents: read
@@ -104,7 +104,7 @@ jobs:
               body: output
             })
 
-        # On push to "main", build or change infrastructure according to Terragrunt configuration files
+        # On push to "main", build or change apps according to Terragrunt configuration files
       - name: Terragrunt Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terragrunt run-all apply --terragrunt-non-interactive
