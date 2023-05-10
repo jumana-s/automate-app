@@ -1,10 +1,15 @@
 data "aws_availability_zones" "available" {}
 
+data "aws_caller_identity" "current" {}
+
 locals {
-  vpc_cidr = "10.0.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
+  vpc_cidr         = "10.0.0.0/16"
+  azs              = slice(data.aws_availability_zones.available.names, 0, 3)
+  account_id       = data.aws_caller_identity.current.account_id
+  root_account_arn = "arn:aws:iam::${local.account_id}:root"
 }
 
+# creat vpc
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "4.0.1"
@@ -21,6 +26,10 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
+resource "aws_iam_group" "group" {
+  name = "cluster-access"
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.13.1"
@@ -34,6 +43,17 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   enable_irsa = true
+
+  # configure group to have access to cluster
+  aws_auth_users = [
+    {
+      "userarn"  = local.root_account_arn
+      "username" = "root"
+      "groups" = [
+        aws_iam_group.group.name
+      ]
+    },
+  ]
 
   eks_managed_node_groups = {
     general = {
