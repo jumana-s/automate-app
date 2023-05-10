@@ -1,0 +1,77 @@
+# This workflow installs the latest version of Terraform & Terragrunt CLI and configures AWS credentials with assumerole.
+# On pull request events, this workflow will run `terragrunt init` and `terragrunt plan` . On push events
+# to the "main" branch, `terragrunt apply` will be executed.
+
+name: "Terraform"
+
+on:
+  push:
+    paths:
+      - "terraform/**"
+    branches: ["main"]
+  pull_request:
+    paths:
+      - "terraform/**"
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.4.6
+  TERRAGRUNT_VERSION: 0.45.10
+  WORKING_DIR: "terraform/terragrunt/dev"
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_PIPELINE_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Install specific Terraform CLI version
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      # Install specific Terragrunt CLI version
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v1.1.0
+        with:
+          terragrunt_version: ${{ env.TERRAGRUNT_VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Initialize Terragrunt
+      - name: Terragrunt Init
+        run: terragrunt run-all init
+        working-directory: ${{ env.WORKING_DIR }}
+
+      # Generates an execution plan for Terraform
+      - name: Terragrunt Plan
+        run: terragrunt run-all plan
+        working-directory: ${{ env.WORKING_DIR }}
+
+        # On push to "main", build or change infrastructure according to Terragrunt configuration files
+      - name: Terragrunt Apply
+        if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
+        run: terragrunt run-all apply --terragrunt-non-interactive
+        working-directory: ${{ env.WORKING_DIR }}
