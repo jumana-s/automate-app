@@ -71,7 +71,7 @@ jobs:
       # Generates an execution plan for Terraform
       - name: Terragrunt Plan
         id: plan
-        run: terragrunt run-all plan
+        run: terragrunt run-all plan > plan.log
         working-directory: ${{ env.WORKING_DIR }}
 
       - name: Update Pull Request
@@ -82,13 +82,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync("plan.log");
             const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
             <details><summary>Show Plan</summary>
 
             \`\`\`terraform\n
-            ${process.env.PLAN}
+            ${plan}
             \`\`\`
 
             </details>
