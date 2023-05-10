@@ -8,11 +8,13 @@ on:
   push:
     paths:
       - terraform/**
+      - ".github/workflows/terraform.yml"
     branches:
       - main
   pull_request:
     paths:
       - terraform/**
+      - ".github/workflows/terraform.yml"
 
 env:
   AWS_REGION: us-east-1
