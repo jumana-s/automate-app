@@ -3,9 +3,9 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules//pipelines-iam"
+  source = "../../../modules//ecr"
 }
 
 inputs = {
-  pipeline_user_name = "github"
+  name = "simple-api-app-images"
 }

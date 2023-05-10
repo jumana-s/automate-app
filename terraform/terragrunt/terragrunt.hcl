@@ -1,4 +1,4 @@
-locals  {
+locals {
   vars       = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   env_name   = local.vars.locals.environment
   aws_region = local.vars.locals.region
@@ -6,9 +6,9 @@ locals  {
 
 generate "versions" {
   path = "versions.tf"
- 
+
   if_exists = "overwrite_terragrunt"
- 
+
   contents = <<EOF
 terraform { 
  
@@ -23,9 +23,9 @@ EOF
 }
 
 generate "provider" {
-  path = "provider.tf"
+  path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-  contents = <<EOF
+  contents  = <<EOF
 provider "aws" {
   region = "us-east-1"
     default_tags {
@@ -46,9 +46,9 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
   config = {
-    bucket = "tf-statefile-${local.env_name}-bucket"
+    bucket = "${local.env_name}-statefile-bucket"
 
-    key = "terraform.tfstate"
+    key            = "${path_relative_to_include()}/terraform.tfstate"
     region         = local.aws_region
     encrypt        = true
     dynamodb_table = "tf-state-lock"
