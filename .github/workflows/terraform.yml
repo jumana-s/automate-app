@@ -7,11 +7,12 @@ name: "Terraform"
 on:
   push:
     paths:
-      - "terraform/**"
-    branches: ["main"]
+      - terraform/**
+    branches:
+      - main
   pull_request:
     paths:
-      - "terraform/**"
+      - terraform/**
 
 env:
   AWS_REGION: us-east-1
@@ -35,6 +36,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -62,13 +64,45 @@ jobs:
 
       # Initialize Terragrunt
       - name: Terragrunt Init
+        id: init
         run: terragrunt run-all init
         working-directory: ${{ env.WORKING_DIR }}
 
       # Generates an execution plan for Terraform
       - name: Terragrunt Plan
-        run: terragrunt run-all plan
+        id: plan
+        run: terragrunt run-all plan -no-color > plan.txt
         working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Update Pull Request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync(`${{ env.WORKING_DIR }}/plan.txt`);
+            const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform\n
+            ${plan}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
 
         # On push to "main", build or change infrastructure according to Terragrunt configuration files
       - name: Terragrunt Apply
