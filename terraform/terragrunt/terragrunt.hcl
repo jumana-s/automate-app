@@ -1,5 +1,5 @@
 locals {
-  vars       = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  vars       = read_terragrunt_config(find_in_parent_folders("common.hcl"))
   env_name   = local.vars.locals.environment
   aws_region = local.vars.locals.region
 }
