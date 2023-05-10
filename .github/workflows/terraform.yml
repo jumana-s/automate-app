@@ -77,8 +77,6 @@ jobs:
       - name: Update Pull Request
         uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
-        env:
-          PLAN: "${{ steps.plan.outputs.stdout }}"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -106,6 +104,6 @@ jobs:
 
         # On push to "main", build or change infrastructure according to Terragrunt configuration files
       - name: Terragrunt Apply
-        if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terragrunt run-all apply --terragrunt-non-interactive
         working-directory: ${{ env.WORKING_DIR }}
