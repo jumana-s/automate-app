@@ -32,6 +32,8 @@ data "aws_ecr_image" "image" {
 # Create secret to access private ecr images
 data "aws_ecr_authorization_token" "ecr_token" {}
 
+data "aws_caller_identity" "current" {}
+
 resource "kubernetes_secret" "secret" {
   metadata {
     name      = "regcred"
