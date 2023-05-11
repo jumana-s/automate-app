@@ -15,14 +15,15 @@ install-aws:
 	curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip";
 	unzip awscliv2.zip;
 	sudo ./aws/install;
+	rm -rf aws && rm awscliv2.zip;
 	@echo "$(COLOUR_GREEN)aws has been installed$(COLOUR_END)"
 
 install-terraform:
 	@echo "$(COLOUR_BLUE)Installing terraform$(COLOUR_END)";
-	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "terraform.zip";
-	unzip terraform.zip;
+	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "terraform_amd64.zip";
+	unzip terraform_amd64.zip;
 	# chmod +x terraform
-	sudo mv ./terraform /usr/local/bin;
+	sudo mv ./terraform_amd64 /usr/local/bin/terraform;
 	@echo "$(COLOUR_GREEN)terraform has been installed$(COLOUR_END)"
 
 install-terragrunt:
