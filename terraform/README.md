@@ -18,3 +18,8 @@ Also need to have terragrunt installed!
 - Run `terragrunt run-all init`
 - Run `terragrunt run-all plan`
 - Run `terragrunt run-all apply`
+
+### To test modules
+
+- Move to terratest/ `cd terratest`
+- Run `go test -v -timeout 30m`
