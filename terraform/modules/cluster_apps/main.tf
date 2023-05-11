@@ -53,7 +53,7 @@ resource "kubernetes_secret" "secret" {
 }
 
 # Deploy app
-resource "kubernetes_deployment" "kubernetes_deployment" {
+resource "kubernetes_deployment" "deploy" {
   metadata {
     name      = "simple-app"
     namespace = kubernetes_namespace.ns.metadata[0].name

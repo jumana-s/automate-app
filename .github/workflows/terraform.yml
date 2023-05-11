@@ -10,6 +10,7 @@ on:
       - terraform/terragrunt/dev/infra/**
       - ".github/workflows/terraform.yml"
       - terraform/modules/**
+      - "!terraform/modules/cluster_apps/**"
 
     branches:
       - main
@@ -18,6 +19,7 @@ on:
       - terraform/terragrunt/dev/infra**
       - ".github/workflows/terraform.yml"
       - terraform/modules/**
+      - "!terraform/modules/cluster_apps/**"
 
 env:
   AWS_REGION: us-east-1
