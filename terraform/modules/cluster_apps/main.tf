@@ -119,7 +119,8 @@ resource "kubernetes_deployment" "deploy" {
 
 resource "kubernetes_service" "service" {
   metadata {
-    name = "${kubernetes_deployment.deploy.metadata.0.name}-service"
+    name      = "${kubernetes_deployment.deploy.metadata.0.name}-service"
+    namespace = kubernetes_namespace.ns.metadata[0].name
   }
 
   spec {
