@@ -1,4 +1,4 @@
-variable "env" {
+variable "cluster_name" {
   type        = string
-  description = "Environment name/type"
+  description = "Cluster name"
 }
