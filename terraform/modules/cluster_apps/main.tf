@@ -53,7 +53,7 @@ resource "kubernetes_secret" "secret" {
 }
 
 # Deploy app
-resource "kubernetes_deployment" "deploy" {
+resource "kubernetes_deployment" "kubernetes_deployment" {
   metadata {
     name      = "simple-app"
     namespace = kubernetes_namespace.ns.metadata[0].name
@@ -115,4 +115,22 @@ resource "kubernetes_deployment" "deploy" {
   }
 
   depends_on = [kubernetes_secret.secret]
+}
+
+resource "kubernetes_service" "service" {
+  metadata {
+    name = "${kubernetes_deployment.deploy.metadata.0.name}-service"
+  }
+
+  spec {
+    selector = {
+      app = kubernetes_deployment.deploy.metadata.0.labels.app
+    }
+    port {
+      port        = 80
+      target_port = 8080
+    }
+
+    type = "LoadBalancer"
+  }
 }
