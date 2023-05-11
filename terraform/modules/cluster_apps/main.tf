@@ -113,4 +113,6 @@ resource "kubernetes_deployment" "deploy" {
       }
     }
   }
+
+  depends_on = [kubernetes_secret.secret]
 }

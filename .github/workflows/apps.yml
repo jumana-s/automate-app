@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - terraform/terragrunt/dev/apps/**
+      - terraform/modules/cluster_apps/**
       - ".github/workflows/apps.yml"
     branches:
       - main
@@ -15,6 +16,7 @@ on:
     paths:
       - terraform/terragrunt/dev/apps**
       - ".github/workflows/apps.yml"
+      - terraform/modules/cluster_apps/**
 
 env:
   AWS_REGION: us-east-1

@@ -9,12 +9,15 @@ on:
     paths:
       - terraform/terragrunt/dev/infra/**
       - ".github/workflows/terraform.yml"
+      - terraform/modules/**
+
     branches:
       - main
   pull_request:
     paths:
       - terraform/terragrunt/dev/infra**
       - ".github/workflows/terraform.yml"
+      - terraform/modules/**
 
 env:
   AWS_REGION: us-east-1
