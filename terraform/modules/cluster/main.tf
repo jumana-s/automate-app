@@ -2,6 +2,20 @@ data "aws_availability_zones" "available" {}
 
 data "aws_caller_identity" "current" {}
 
+data "aws_eks_cluster" "eks" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.eks.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.eks.token
+}
+
 locals {
   vpc_cidr         = "10.0.0.0/16"
   azs              = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -9,7 +23,7 @@ locals {
   root_account_arn = "arn:aws:iam::${local.account_id}:root"
 }
 
-# creat vpc
+# create vpc
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "4.0.1"
@@ -24,10 +38,6 @@ module "vpc" {
   enable_nat_gateway   = true
   single_nat_gateway   = true
   enable_dns_hostnames = true
-}
-
-resource "aws_iam_group" "group" {
-  name = "cluster-access"
 }
 
 module "eks" {
@@ -45,15 +55,18 @@ module "eks" {
   enable_irsa = true
 
   # configure group to have access to cluster
+  manage_aws_auth_configmap = true
+
   aws_auth_users = [
     {
       "userarn"  = local.root_account_arn
       "username" = "root"
-      "groups" = [
-        aws_iam_group.group.name
-      ]
+      groups     = ["system:nodes", "system:masters"]
     },
   ]
+
+  kms_key_enable_default_policy = true
+  kms_key_administrators        = [local.root_account_arn, data.aws_caller_identity.current.arn]
 
   eks_managed_node_groups = {
     general = {

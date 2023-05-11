@@ -18,3 +18,8 @@ variable "image_tag" {
   description = "Image to use's tag"
   default     = "latest"
 }
+
+variable "region" {
+  type        = string
+  description = "Region name"
+}

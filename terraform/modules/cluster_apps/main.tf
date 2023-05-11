@@ -42,10 +42,8 @@ resource "kubernetes_secret" "secret" {
   data = {
     ".dockerconfigjson" = jsonencode({
       auths = {
-        "${data.aws_ecr_authorization_token.ecr_token.proxy_endpoint}" = {
-          "username" = data.aws_ecr_authorization_token.ecr_token.user_name
-          "password" = data.aws_ecr_authorization_token.ecr_token.password
-          "auth"     = data.aws_ecr_authorization_token.ecr_token.authorization_token
+        "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com" = {
+          "auth" = data.aws_ecr_authorization_token.ecr_token.authorization_token
         }
       }
     })
@@ -84,7 +82,7 @@ resource "kubernetes_deployment" "deploy" {
           name = kubernetes_secret.secret.metadata[0].name
         }
         container {
-          image             = "${data.aws_ecr_repository.repo.repository_url}/${data.aws_ecr_image.image.id}"
+          image             = "${data.aws_ecr_repository.repo.repository_url}@${data.aws_ecr_image.image.id}"
           image_pull_policy = "Always"
           name              = "api"
 
