@@ -21,11 +21,11 @@ install-aws:
 # executed in src/ cause it extracts folder named terraform and cant have two folders named terraform
 install-terraform:
 	@echo "$(COLOUR_BLUE)Installing terraform$(COLOUR_END)";
-	cd src;
-	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "terraform.zip";
-	unzip terraform.zip;
+	cd src; \
+	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "terraform.zip"; \
+	unzip terraform.zip; \
 	# chmod +x terraform
-	sudo mv ./terraform /usr/local/bin/terraform;
+	sudo mv ./terraform /usr/local/bin/terraform; \
 	@echo "$(COLOUR_GREEN)terraform has been installed$(COLOUR_END)"
 
 install-terragrunt:
