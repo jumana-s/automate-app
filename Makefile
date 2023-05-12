@@ -95,10 +95,10 @@ deploy-app:
 get-app-link:
 	@echo "$(COLOUR_BLUE)Getting app link$(COLOUR_END)";
 	aws eks update-kubeconfig --region $(REGION) --name $(CLUSTER);
-	sleep 5;
+	sleep 30;
 	$(eval link := $(shell kubectl get svc $(APP_SVC) -n $(APP_NAME) -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'))
 	@echo "$(COLOUR_GREEN)Link: \n\t http://$(link)/msg $(COLOUR_END)";
-	@echo "$(COLOUR_RED)\tMight need to referesh a couple of times, endpoint might not be ready.$(COLOUR_END)"
+	@echo "$(COLOUR_RED)\tMight need to refresh a couple of times, endpoint might not be ready.$(COLOUR_END)"
 
 destroy-app:
 	@echo "$(COLOUR_BLUE)Delete app$(COLOUR_END)" ;
