@@ -72,23 +72,7 @@ create-infra:
 	terragrunt run-all init --terragrunt-non-interactive && \
 	terragrunt run-all plan && \
 	terragrunt run-all apply --terragrunt-non-interactive;
-	
-	@# See comment in hack rule below
-	@# tail -n $(LINES) terraform/modules/cluster/main.tf | sed 's/^#//g' > temp.tf
-	@# head -n -$(LINES) terraform/modules/cluster/main.tf >> temp.tf
-	@# cp terraform/modules/cluster/main.tf main.tf
-	@# mv temp.tf terraform/modules/cluster/main.tf
-	
-	@# apply again
-	@# cd terraform/terragrunt/dev/infra && \
-	@# terragrunt run-all apply --terragrunt-non-interactive;
-	
-	@# # move original file back
-	@# mv main.tf terraform/modules/cluster/main.tf
-	
-	
 	@echo "$(COLOUR_GREEN)Infra created xD$(COLOUR_END)" 
-	
 
 build-app:
 	@echo "$(COLOUR_BLUE)Building & pushing image$(COLOUR_END)";
@@ -111,9 +95,10 @@ deploy-app:
 get-app-link:
 	@echo "$(COLOUR_BLUE)Getting app link$(COLOUR_END)";
 	aws eks update-kubeconfig --region $(REGION) --name $(CLUSTER);
-	@sleep 5
+	sleep 5;
 	$(eval link := $(shell kubectl get svc $(APP_SVC) -n $(APP_NAME) -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'))
-	@echo "$(COLOUR_GREEN)Link: \n\t http://$(link)/msg $(COLOUR_END)" 
+	@echo "$(COLOUR_GREEN)Link: \n\t http://$(link)/msg $(COLOUR_END)";
+	@echo "$(COLOUR_RED)\tMight need to referesh a couple of times, endpoint might not be ready.$(COLOUR_END)"
 
 destroy-app:
 	@echo "$(COLOUR_BLUE)Delete app$(COLOUR_END)" ;
@@ -132,17 +117,4 @@ destroy-infra:
 	cd terraform/terragrunt/dev/infra && \
 	terragrunt run-all destroy;
 	
-	@# # move original file back
-	@# mv main.tf terraform/modules/cluster/main.tf;
-	
 	@echo "$(COLOUR_GREEN)Infra deleted$(COLOUR_END)" 
-
-# becuase of some bug in the eks module to do with aws-iam-auth needs to be included in cluster create/delete
-# hacky fix is to uncomment last few lines of cluster module main.tf so that the aws-iam-auth can 
-# be applied again, it will be successful this time	
-# hack:
-# 	tail -n $(LINES) terraform/modules/cluster/main.tf | sed 's/^#//g' > temp.tf
-# 	head -n -$(LINES) terraform/modules/cluster/main.tf >> temp.tf
-# 	cp terraform/modules/cluster/main.tf main.tf
-# 	mv temp.tf terraform/modules/cluster/main.tf
-	
