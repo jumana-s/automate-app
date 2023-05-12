@@ -8,7 +8,17 @@ ECR_REPOSITORY := simple-api-app-images
 CLUSTER := dev-cluster
 APP_SVC := simple-app-service
 APP_NAME := simple-app
+LINES := 16
+AWS_ACCESS_KEY := 
+AWS_SECRET_KEY := 
 
+all: install run-all
+
+install: install-aws install-terraform install-terragrunt install-docker install-kubectl
+
+run-all:  aws-configure create-infra build-app deploy-app get-app-link
+
+destroy: destroy-app destroy-infra
 
 install-aws:
 	@echo "$(COLOUR_BLUE)Installing aws$(COLOUR_END)";
@@ -21,72 +31,118 @@ install-aws:
 # executed in src/ cause it extracts folder named terraform and cant have two folders named terraform
 install-terraform:
 	@echo "$(COLOUR_BLUE)Installing terraform$(COLOUR_END)";
-	cd src; \
-	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "terraform.zip"; \
-	unzip terraform.zip; \
-	# chmod +x terraform
-	sudo mv ./terraform /usr/local/bin/terraform; \
+	curl "https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip" -o "src/terraform.zip"; 
+	unzip src/terraform.zip -d src/; 
+	sudo mv ./src/terraform /usr/local/bin/terraform; 
+	rm src/terraform.zip
 	@echo "$(COLOUR_GREEN)terraform has been installed$(COLOUR_END)"
 
 install-terragrunt:
 	@echo "$(COLOUR_BLUE)Installing terragrunt$(COLOUR_END)";
-	curl "https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.11/terragrunt_linux_amd64" -o "terragrunt";
-	chmod u+x terragrunt;
-	mv terragrunt /usr/local/bin/terragrunt;
+	curl -L "https://github.com/gruntwork-io/terragrunt/releases/download/v0.45.11/terragrunt_linux_amd64" -o "terragrunt";
+	chmod +x terragrunt;
+	sudo mv terragrunt /usr/local/bin/terragrunt;
 	@echo "$(COLOUR_GREEN)terragrunt has been installed$(COLOUR_END)"
 
 install-docker:
 	@echo "$(COLOUR_BLUE)Installing docker$(COLOUR_END)";
 	curl -fsSL https://get.docker.com -o get-docker.sh; 
 	sudo sh ./get-docker.sh;
+	rm get-docker.sh;
 	@echo "$(COLOUR_GREEN)docker has been installed$(COLOUR_END)"
 
 install-kubectl:
 	@echo "$(COLOUR_BLUE)Install kubectl$(COLOUR_END)";
-	curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl;
-	@echo "$(COLOUR_GREEN)docker has been installed$(COLOUR_END)"
+	curl -LO "https://dl.k8s.io/release/v1.27.1/bin/linux/amd64/kubectl";
+	chmod +x kubectl;
+	sudo mv kubectl /usr/local/bin
+	@echo "$(COLOUR_GREEN)kubectl has been installed$(COLOUR_END)"
+	
+aws-configure:
+	@echo "$(COLOUR_BLUE)configuring aws credentials$(COLOUR_END)"
+	aws configure set aws_access_key_id $(AWS_ACCESS_KEY);
+	aws configure set aws_secret_access_key $(AWS_SECRET_KEY);
+	aws configure set default.region $(REGION);
+	aws sts get-caller-identity;
+	@echo "$(COLOUR_GREEN)aws has been configured$(COLOUR_END)"
 
-create-infra:
+create-infra: 
 	@echo "$(COLOUR_BLUE)Creating infrastructure$(COLOUR_END)";
-	cd terraform/terragrunt/dev/infra;
-	terragrunt run-all init;
-	terragrunt run-all plan;
-	terragrunt run-all apply;
+	cd terraform/terragrunt/dev/infra && \
+	ls && \
+	terragrunt run-all init --terragrunt-non-interactive && \
+	terragrunt run-all plan && \
+	terragrunt run-all apply --terragrunt-non-interactive || true;
+	
+	# See comment in hack rule below
+	tail -n $(LINES) terraform/modules/cluster/main.tf | sed 's/^#//g' > temp.tf
+	head -n -$(LINES) terraform/modules/cluster/main.tf >> temp.tf
+	cp terraform/modules/cluster/main.tf main.tf
+	mv temp.tf terraform/modules/cluster/main.tf
+	
+	# apply again
+	cd terraform/terragrunt/dev/infra && \
+	terragrunt run-all apply --terragrunt-non-interactive;
+	
+	# move original file back
+	mv main.tf terraform/modules/cluster/main.tf
+	
+	
 	@echo "$(COLOUR_GREEN)Infra created xD$(COLOUR_END)" 
+	
 
 build-app:
 	@echo "$(COLOUR_BLUE)Building & pushing image$(COLOUR_END)";
-	export ACCOUNT=$(shell aws ecr describe-registry --query registryId --output text); \
-	aws ecr get-login-password --region $(REGION) | docker login --username AWS \
+	$(eval ACCOUNT:= $(shell aws ecr describe-registry --query registryId --output text))
+	aws ecr get-login-password --region $(REGION) | sudo docker login --username AWS \
 	 --password-stdin $(ACCOUNT).dkr.ecr.$(REGION).amazonaws.com;
-	docker build -t $(ACCOUNT)/$(ECR_REPOSITORY):latest . ;
-	docker push $(ACCOUNT)/$(ECR_REPOSITORY):latest ;
+	sudo docker build -t $(ECR_REPOSITORY):latest . ;
+	sudo docker tag $(ECR_REPOSITORY):latest $(ACCOUNT).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY);
+	sudo docker push $(ACCOUNT).dkr.ecr.$(REGION).amazonaws.com/$(ECR_REPOSITORY);
 	@echo "$(COLOUR_GREEN)Image built$(COLOUR_END)" 
 
 deploy-app:
 	@echo "$(COLOUR_BLUE)Creating app$(COLOUR_END)" ; 
-	cd terraform/terragrunt/dev/apps;
-	terragrunt run-all init;
-	terragrunt run-all plan;
-	terragrunt run-all apply;
-	@echo "$(COLOUR_GREEN)Infra created xD$(COLOUR_END)" 
+	cd terraform/terragrunt/dev/apps && \
+	terragrunt run-all init --terragrunt-non-interactive && \
+	terragrunt run-all plan && \
+	terragrunt run-all apply --terragrunt-non-interactive;
+	@echo "$(COLOUR_GREEN)App created$(COLOUR_END)" 
 
 get-app-link:
 	@echo "$(COLOUR_BLUE)Getting app link$(COLOUR_END)";
 	aws eks update-kubeconfig --region $(REGION) --name $(CLUSTER);
-	export link=$(shell kubectl get svc $(APP_SVC) -n $(APP_NAME) -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'); \
+	$(eval link := $(shell kubectl get svc $(APP_SVC) -n $(APP_NAME) -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'))
 	@echo "$(COLOUR_GREEN)Link - http://$(link)/msg $(COLOUR_END)" 
-
-destroy: destroy-app destroy-infra
 
 destroy-app:
 	@echo "$(COLOUR_BLUE)Delete app$(COLOUR_END)" ;
-	cd terraform/terragrunt/dev/apps;
-	terragrunt run-all destroy;
+	cd terraform/terragrunt/dev/apps && \
+	terragrunt run-all destroy --terragrunt-non-interactive;
 	@echo "$(COLOUR_GREEN)App deleted$(COLOUR_END)" 
 
-destroy-infra:
+# Will leave this as interactive in case you dont want to delete your infra
+destroy-infra: hack
 	@echo "$(COLOUR_BLUE)Delete infra$(COLOUR_END)";
-	cd terraform/terragrunt/dev/infra;
+	
+	# empty repository
+	aws ecr batch-delete-image --region $(REGION) --repository-name $(ECR_REPOSITORY) \
+    	--image-ids imageTag=latest ;
+	
+	cd terraform/terragrunt/dev/infra && \
 	terragrunt run-all destroy;
+	
+	# move original file back
+	mv main.tf terraform/modules/cluster/main.tf;
+	
 	@echo "$(COLOUR_GREEN)Infra deleted$(COLOUR_END)" 
+
+# becuase of some bug in the eks module to do with aws-iam-auth needs to be included in cluster create/delete
+# hacky fix is to uncomment last few lines of cluster module main.tf so that the aws-iam-auth can 
+# be applied again, it will be successful this time	
+hack:
+	tail -n $(LINES) terraform/modules/cluster/main.tf | sed 's/^#//g' > temp.tf
+	head -n -$(LINES) terraform/modules/cluster/main.tf >> temp.tf
+	cp terraform/modules/cluster/main.tf main.tf
+	mv temp.tf terraform/modules/cluster/main.tf
+	
