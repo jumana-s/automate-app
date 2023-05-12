@@ -13,7 +13,7 @@ Steps to create terraform infrastructure, build & push image, and deploy image t
 - Region is written as `us-east-1` in configuration across the repo. If you are using another region edit [common.hcl](./terraform/terragrunt/dev/common.hcl), [terragrunt.hcl](./terraform/terragrunt/terragrunt.hcl), and [Makefile](./Makefile).
 - Script was created/written on/for Linux. Can't guarantee it works for macOS.
 
-### Commands
+### Run
 
 If you already have **aws**, **terraform**, **kubectl**, **terragrunt**, and **docker** installed you can run `make run-all`. It will configure aws with the credentials given, create the cluster, and deploy application.
 
@@ -24,6 +24,27 @@ else
 #### Cleanup / Destroy
 
 To destroy terraform resources run `make destroy`
+
+#### Commands
+
+| command                   | description                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `make all`                | Install aws, docker, kubectl, terragrunt, and terraform. Configure aws, create infrastructure, deploy application, and provide app link.     |
+| `make install`            | Install aws, docker, kubectl, terragrunt, and terraform. **Note:** only use if you don't have any those, else use specific install commands. |
+| `make run-all`            | Configure aws, create infrastructure, deploy application, and provide app link                                                               |
+| `make destroy`            | Destroy infrastructure and undeploy app                                                                                                      |
+| `make install-aws`        | Install AWS cli                                                                                                                              |
+| `make install-terraform`  | Install Terraform                                                                                                                            |
+| `make install-terragrunt` | Install Terragrunt                                                                                                                           |
+| `make install-docker`     | Install Docker                                                                                                                               |
+| `make install-kubectl`    | Install kubectl                                                                                                                              |
+| `make aws-configure`      | Configure aws using user provide AWS access and secret key                                                                                   |
+| `make create-infra`       | Creates Infrastructure                                                                                                                       |
+| `make build-app`          | Build and pushes docker image to ECR                                                                                                         |
+| `make deploy-app`         | Deploy's app on cluster and creates service to expose deployment to the internet                                                             |
+| `make get-app-link`       | Get the deployment's link                                                                                                                    |
+| `make destroy-app`        | Undeploy's app and deletes service                                                                                                           |
+| `make destroy-infra`      | Destroys ECR and cluster                                                                                                                     |
 
 ## Replicate setting up workflow
 
