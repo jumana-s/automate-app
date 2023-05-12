@@ -1,5 +1,7 @@
 # Liatrio Cloud Native Exercise
 
+A take home project to automate infrastructure creation and application deployment.
+
 ## Setup Locally
 
 Steps to create terraform infrastructure, build & push image, and deploy image to kubernetes cluster.
@@ -13,9 +15,13 @@ Steps to create terraform infrastructure, build & push image, and deploy image t
 - Region is written as `us-east-1` in configuration across the repo. If you are using another region edit [common.hcl](./terraform/terragrunt/dev/common.hcl), [terragrunt.hcl](./terraform/terragrunt/terragrunt.hcl), and [Makefile](./Makefile).
 - Script was created/written on/for Linux. Can't guarantee it works for macOS.
 
+**NOTE**: S3 Bucket names need to be unique. Tried leaving unique name.[Might need to change](./terraform/terragrunt/terragrunt.hcl)
+
 ### Run
 
 If you already have **aws**, **terraform**, **kubectl**, **terragrunt**, and **docker** installed you can run `make run-all`. It will configure aws with the credentials given, create the cluster, and deploy application.
+
+- If you need to install one of the listed tools above see [Commands](#commands)
 
 else
 
