@@ -73,42 +73,46 @@ jobs:
         run: terragrunt run-all init
         working-directory: ${{ env.WORKING_DIR }}
 
-      # Generates an execution plan for Terraform
-      - name: Terragrunt Plan
-        id: plan
-        run: terragrunt run-all plan -no-color > plan.txt
-        working-directory: ${{ env.WORKING_DIR }}
+      # # Generates an execution plan for Terraform
+      # - name: Terragrunt Plan
+      #   id: plan
+      #   run: terragrunt run-all plan -no-color > plan.txt
+      #   working-directory: ${{ env.WORKING_DIR }}
 
-      - name: Update Pull Request
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync(`${{ env.WORKING_DIR }}/plan.txt`);
-            const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+      # - name: Update Pull Request
+      #   uses: actions/github-script@v6
+      #   if: github.event_name == 'pull_request'
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     script: |
+      #       const fs = require('fs');
+      #       const plan = fs.readFileSync(`${{ env.WORKING_DIR }}/plan.txt`);
+      #       const output = `#### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+      #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+      #       <details><summary>Show Plan</summary>
 
-            \`\`\`terraform\n
-            ${plan}
-            \`\`\`
+      #       \`\`\`terraform\n
+      #       ${plan}
+      #       \`\`\`
 
-            </details>
+      #       </details>
 
-            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+      #       *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       })
 
-        # On push to "main", build or change infrastructure according to Terragrunt configuration files
-      - name: Terragrunt Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terragrunt run-all apply --terragrunt-non-interactive
+      #   # On push to "main", build or change infrastructure according to Terragrunt configuration files
+      # - name: Terragrunt Apply
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   run: terragrunt run-all apply --terragrunt-non-interactive
+      #   working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terragrunt Destroy
+        run: terragrunt run-all destroy --terragrunt-non-interactive
         working-directory: ${{ env.WORKING_DIR }}

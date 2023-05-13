@@ -46,7 +46,7 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
   config = {
-    bucket = "${local.env_name}-statefile-buckets"
+    bucket = "${local.env_name}-statefile-bucket"
 
     key            = "${path_relative_to_include()}/terraform.tfstate"
     region         = local.aws_region
