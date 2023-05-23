@@ -70,7 +70,7 @@ jobs:
       # Initialize Terragrunt
       - name: Terragrunt Init
         id: init
-        run: terragrunt run-all init
+        run: terragrunt run-all init --terragrunt-non-interactive
         working-directory: ${{ env.WORKING_DIR }}
 
       # Generates an execution plan for Terraform
