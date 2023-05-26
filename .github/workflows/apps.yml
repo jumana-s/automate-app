@@ -107,11 +107,11 @@ jobs:
             })
 
         # On push to "main", build or change apps according to Terragrunt configuration files
-      - name: Terragrunt Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terragrunt run-all apply --terragrunt-non-interactive
-        working-directory: ${{ env.WORKING_DIR }}
-
-      # - name: Terragrunt Destroy
-      #   run: terragrunt run-all destroy --terragrunt-non-interactive
+      # - name: Terragrunt Apply
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   run: terragrunt run-all apply --terragrunt-non-interactive
       #   working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Terragrunt Destroy
+        run: terragrunt run-all destroy --terragrunt-non-interactive
+        working-directory: ${{ env.WORKING_DIR }}
