@@ -1,4 +1,4 @@
-# Liatrio Cloud Native Exercise
+# Automated App Setup & Deployment
 
 A take home project to automate infrastructure creation and application deployment.
 
